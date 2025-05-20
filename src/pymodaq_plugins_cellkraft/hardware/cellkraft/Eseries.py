@@ -10,6 +10,7 @@ from enum import IntEnum
     # RH% : register 9240 default 10
     # SP flow(g/min) register 9310 default 10
     # SP TEMP tube °C register 9355
+    # Pump % 9109
     #
     # READ
     #
@@ -25,6 +26,14 @@ from enum import IntEnum
 
 class Pump(IntEnum):
     read_address = 6158
+    write_address = 9109
+    default_write_value = 100
+    scaling = 100
+    read_scaling = scaling
+    write_scaling = scaling
+
+
+class PumpMode(IntEnum):
     write_address = 9107
     mode_auto = 0
     mode_manual = 1
@@ -74,9 +83,15 @@ Eseries_Config = {
             "general": {
                 "scaling_default": 1,
                 },
+            PumpMode.__name__: {
+                "reference": PumpMode,
+                "authorized_write_value": [0, 1, 2],
+                },
             Pump.__name__: {
                 "reference": Pump,
-                "authorized_write_value": [0, 1, 2],
+                "unit": "%",
+                "type": float,
+                "authorized_write_value": range(0, 105, 1),
                 },
             Steam.__name__: {
                 "reference": Steam,
@@ -163,9 +178,16 @@ class CellKraftE1500Drivers:
 
         self.registers["PumpSetMode"] = {
             "method": self.PumpSetMode,
+            "reference": config_dict[1500]["PumpMode"]["reference"],
+            "register": config_dict[1500]["PumpMode"]["reference"].write_address.value,
+            "mode": "write"
+        }
+        self.registers["Pump"] = {
+            "method": self.Pump,
             "reference": config_dict[1500]["Pump"]["reference"],
             "register": config_dict[1500]["Pump"]["reference"].write_address.value,
-            "mode": "write"
+            "mode": "write",
+            "scaling": config_dict[1500]["Pump"]["reference"].scaling.value
         }
         self.registers["SP_SteamT"] = {
             "method": self.SP_SteamT,
@@ -259,20 +281,36 @@ class CellKraftE1500Drivers:
         order: int
         match value:
             case "auto":
-                order = Pump.mode_auto.value
+                order = PumpMode.mode_auto.value
             case "manual":
-                order = Pump.mode_manual.value
+                order = PumpMode.mode_manual.value
             case "prime":
-                order = Pump.mode_prime.value
+                order = PumpMode.mode_prime.value
             case _:
-                order = Pump.default_mode.value
+                order = PumpMode.default_mode.value
         try:
             self.instr.write(self.registers["PumpSetMode"]["register"],
                              order)
         except Exception as e:
             raise (Exception, f"error in {self.__qualname__}")
 
-    @registerfactory("Steam", "write")
+    # @registerfactory("Pump", "write")
+    def Pump(self, pump_power: int=100):
+        """Set the pump power in %
+
+        :param pump_power: int% pump power
+        """
+
+        if isinstance(pump_power, int):
+            try:
+                self.instr.write(self.registers["Pump"]["register"],
+                                 pump_power*self.registers["Pump"]["scaling"])
+            except Exception as e:
+                raise Exception
+        else:
+            raise (TypeError, f"type(pump_power) passed to {self.__qualname__}.RH() must but int")
+
+    # @registerfactory("Steam", "write")
     def SP_SteamT(self, temperature: int=10):
         """Set the SP Steam temperature in °C
 
