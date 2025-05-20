@@ -53,7 +53,7 @@ class Steam(IntEnum):
 class Air(IntEnum):
     read_address = 4628
     write_address = 9240
-    default_write_value = 105
+    default_write_value = 105.0
     scaling = 10
     read_scaling = scaling
     write_scaling = scaling
@@ -61,7 +61,7 @@ class Air(IntEnum):
 class Flow(IntEnum):
     read_address = 6518
     write_address = 9310
-    default_write_value = 105
+    default_write_value = 105.0
     scaling = 10
     read_scaling = scaling
     write_scaling = scaling
@@ -69,7 +69,7 @@ class Flow(IntEnum):
 class Tube(IntEnum):
     read_address = 4468
     write_address = 9355
-    default_write_value = 105
+    default_write_value = 105.0
     read_scaling = 10
     write_scaling = 10
 
@@ -95,32 +95,32 @@ Eseries_Config = {
                 },
             Steam.__name__: {
                 "reference": Steam,
-                "type": int,
+                "type": float,
                 "unit": "C",
                 "authorized_write_value": range(0, 200, 1),
                 },
             Air.__name__: {
                 "reference": Air,
                 "unit": "%",
-                "type": int,
+                "type": float,
                 "authorized_write_value": range(0, 105, 1),
                 },
             Flow.__name__: {
                 "reference": Flow,
                 "unit": "g/min",
-                "type": int,
+                "type": float,
                 "authorized_write_value": [value for value in range(0, 250, 1)],
                 },
             Tube.__name__: {
                 "reference": Tube,
                 "unit": "C",
-                "type": int,
+                "type": float,
                 "authorized_write_value": range(0, 200, 1),
                 },
             Pressure.__name__: {
                 "reference": Pressure,
                 "unit": "Bar",
-                "type": int,
+                "type": float,
                 # "write_address": 9355,
                 # "authorized_write_value": range(0, 200, 1),
                 # "default_write_value": 105
@@ -193,7 +193,8 @@ class CellKraftE1500Drivers:
             "method": self.SP_SteamT,
             "reference": config_dict[1500]["Steam"]["reference"],
             "register": config_dict[1500]["Steam"]["reference"].write_address.value,
-            "mode": "write"
+            "mode": "write",
+            "scaling": config_dict[1500]["Steam"]["reference"].write_scaling.value
         }
         self.registers["RH"] = {
             "method": self.RH,
@@ -232,21 +233,21 @@ class CellKraftE1500Drivers:
         self.registers["Get_Flow"] = {
             "method": self.Get_Flow,
             "reference": config_dict[1500]["Flow"]["reference"],
-            "register": config_dict[1500]["Flow"]["reference"].read_scaling.value,
+            "register": config_dict[1500]["Flow"]["reference"].read_address.value,
             "mode": "read",
             "scaling": config_dict[1500]["Flow"]["reference"].read_scaling.value
         }
         self.registers["Get_Pressure"] = {
             "method": self.Get_Pressure,
             "reference": config_dict[1500]["Pressure"]["reference"],
-            "register": config_dict[1500]["Pressure"]["reference"].read_scaling.value,
+            "register": config_dict[1500]["Pressure"]["reference"].read_address.value,
             "mode": "read",
             "scaling": config_dict[1500]["Pressure"]["reference"].read_scaling.value
         }
         self.registers["Get_Tube_T"] = {
             "method": self.Get_Tube_T,
             "reference": config_dict[1500]["Tube"]["reference"],
-            "register": config_dict[1500]["Tube"]["reference"].read_scaling.value,
+            "register": config_dict[1500]["Tube"]["reference"].read_address.value,
             "mode": "read",
             "scaling": config_dict[1500]["Tube"]["reference"].read_scaling.value
         }
@@ -389,7 +390,7 @@ class CellKraftE1500Drivers:
         if isinstance(ReadResult, Exception):
             raise ReadResult
         else:
-            return ReadResult.registers[0]/self.registers["Get_Steam_T"]["readscaling"]
+            return ReadResult.registers[0]/self.registers["Get_Steam_T"]["scaling"]
 
     @registerfactory("air", "read")
     def Get_Air_H(self):
