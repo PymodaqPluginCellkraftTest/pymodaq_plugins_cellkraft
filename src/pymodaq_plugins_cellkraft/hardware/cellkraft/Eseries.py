@@ -128,18 +128,6 @@ Eseries_Config = {
             }
         }
 
-def registerfactory(reference, mode):
-    """This will create all the function from dict[ref]
-
-    :param reference: the name of the item
-    :return:
-    """
-    def decorator(function):
-        def wrapped(*args):
-            function(*args)
-        return wrapped
-    return decorator
-
 
 class CellKraftE1500Drivers:
     """TCP ModBus driver for the Steam Generator CellKraft E-series
@@ -272,7 +260,6 @@ class CellKraftE1500Drivers:
         """
         self.instr.close()
 
-    @registerfactory("Pump", "write")
     def PumpSetMode(self, value: str = "auto"):
         """Writing the pump mode
 
@@ -295,7 +282,6 @@ class CellKraftE1500Drivers:
         except Exception as e:
             raise (Exception, f"error in {self.__qualname__}")
 
-    # @registerfactory("Pump", "write")
     def Pump(self, pump_power: int=100):
         """Set the pump power in %
 
@@ -311,7 +297,6 @@ class CellKraftE1500Drivers:
         else:
             raise (TypeError, f"type(pump_power) passed to {self.__qualname__}.RH() must but int")
 
-    # @registerfactory("Steam", "write")
     def SP_SteamT(self, temperature: int=10):
         """Set the SP Steam temperature in °C
 
@@ -329,7 +314,6 @@ class CellKraftE1500Drivers:
         else:
             raise (TypeError, f"type(temperature) passed to {self.__qualname__}.SP_vapT must be an int") # add {self.__class__.__name__}. ?
 
-    @registerfactory("Air", "write")
     def RH(self, relativehumidity: int=105):
         """Set the relative humidity in %
 
@@ -345,7 +329,6 @@ class CellKraftE1500Drivers:
         else:
             raise (TypeError, f"type(relativehumidity) passed to {self.__qualname__}.RH() must but int")
 
-    @registerfactory("Flow", "write")
     def SP_Flow(self, flow: int):
         """Set the flow in g/min
 
@@ -362,7 +345,6 @@ class CellKraftE1500Drivers:
         else:
             raise (TypeError, f"type(flow) passed to {self.__qualname__}.SP_Flow() must but int")
 
-    @registerfactory("Tube", "write")
     def SP_Tube_Temp(self, temperature: int):
         """Set the tube temperature
 
@@ -379,7 +361,6 @@ class CellKraftE1500Drivers:
         else:
             raise (TypeError, f"type(temperature) passed to {self.__qualname__}.SP_Tube_Temp() must but int")
 
-    @registerfactory("steam", "read")
     def Get_Steam_T(self):
         """Get the steam temperature
 
@@ -392,7 +373,6 @@ class CellKraftE1500Drivers:
         else:
             return ReadResult.registers[0]/self.registers["Get_Steam_T"]["scaling"]
 
-    @registerfactory("air", "read")
     def Get_Air_H(self):
         """Get the air humidity
 
@@ -405,7 +385,6 @@ class CellKraftE1500Drivers:
         else:
             return ReadResult.registers[0]/self.registers["Get_Air_H"]["scaling"]
 
-    # @registerfactory("steam", "read")
     def Get_Flow(self):
         """Get the air humidity
 
@@ -418,7 +397,6 @@ class CellKraftE1500Drivers:
         else:
             return ReadResult.registers[0]/self.registers["Get_Flow"]["scaling"]
 
-    @registerfactory("pressure", "read")
     def Get_Pressure(self):
         """Get the pressure
 
@@ -431,7 +409,6 @@ class CellKraftE1500Drivers:
         else:
             return ReadResult.registers[0]/self.registers["Get_Pressure"]["scaling"]
 
-    @registerfactory("tube", "read")
     def Get_Tube_T(self):
         """Get the tube temperature
 
