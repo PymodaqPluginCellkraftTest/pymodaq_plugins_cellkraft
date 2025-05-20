@@ -2,7 +2,7 @@ from typing import Union, List, Dict
 
 from pymodaq.control_modules.move_utility_classes import DAQ_Move_base, comon_parameters_fun, main, DataActuatorType,\
     DataActuator  # common set of parameters for all actuators
-from pymodaq.utils.daq_utils import ThreadCommand # object used to send info back to the main thread
+from pymodaq.utils.daq_utils import ThreadCommand  # object used to send info back to the main thread
 from pymodaq.utils.parameter import Parameter
 from pymodaq_plugins_cellkraft.hardware.cellkraft.Eseries import CellKraftE1500Drivers, Eseries_Config
 
@@ -40,10 +40,12 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
     data_actuator_type = DataActuatorType.DataActuator  # wether you use the new data style for actuator otherwise set this
     # as  DataActuatorType.float  (or entirely remove the line)
 
-    params = [  {'title': 'Device:', 'name': 'device', 'type': 'str', 'value': 'Cellkraft E1500 Series', 'readonly': True},
-                {'title': 'Host:', 'name': 'host', 'type': 'str', 'value': 'cet-cc01-gen01.insa-lyon.fr'},
-                {'title': 'Comments:', 'name': 'comment', 'type': 'text', 'value': ''},
-                ] + comon_parameters_fun(is_multiaxes, axis_names=_axis_names, epsilon=_epsilon)
+    params = [{'title': 'Device:', 'name': 'device', 'type': 'str', 'value': 'Cellkraft E1500 Series',
+               'readonly': True},
+              {'title': 'Host:', 'name': 'host', 'type': 'str', 'value': 'cet-cc01-gen01.insa-lyon.fr'},
+              {'title': 'Comments:', 'name': 'comment', 'type': 'text', 'value': ''},
+              ] + comon_parameters_fun(is_multiaxes, axis_names=_axis_names, epsilon=_epsilon)
+
     # _epsilon is the initial default value for the epsilon parameter allowing pymodaq to know if the controller reached
     # the target value. It is the developer responsibility to put here a meaningful value
 
@@ -104,7 +106,7 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
             # see BrushlessDCMotor from the thorlabs plugin for an exemple
 
         elif param.name() == "a_parameter_you've_added_in_self.params":
-           self.controller.your_method_to_apply_this_param_change()
+            self.controller.your_method_to_apply_this_param_change()
         else:
             pass
 
@@ -122,11 +124,11 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         initialized: bool
             False if initialization failed otherwise True
         """
-        #raise NotImplemented  # TODO when writing your own plugin remove this line and modify the ones below
+        # raise NotImplemented  # TODO when writing your own plugin remove this line and modify the ones below
         self.ini_stage_init(slave_controller=controller)  # will be useful when controller is slave
 
         if self.is_master:  # is needed when controller is master
-            self.controller = CellKraftE1500Drivers(self.settings['host']) #  arguments for instantiation!)
+            self.controller = CellKraftE1500Drivers(self.settings['host'])  # arguments for instantiation!)
             # todo: enter here whatever is needed for your controller initialization and eventual
             #  opening of the communication channel
 
@@ -175,12 +177,12 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         self.emit_status(ThreadCommand('Update_Status', ['Some info you want to log']))
 
     def stop_motion(self):
-      """Stop the actuator and emits move_done signal"""
+        """Stop the actuator and emits move_done signal"""
 
-      ## TODO for your custom plugin
-      raise NotImplemented  # when writing your own plugin remove this line
-      self.controller.your_method_to_stop_positioning()  # when writing your own plugin replace this line
-      self.emit_status(ThreadCommand('Update_Status', ['Some info you want to log']))
+        ## TODO for your custom plugin
+        raise NotImplemented  # when writing your own plugin remove this line
+        self.controller.your_method_to_stop_positioning()  # when writing your own plugin replace this line
+        self.emit_status(ThreadCommand('Update_Status', ['Some info you want to log']))
 
 
 if __name__ == '__main__':
