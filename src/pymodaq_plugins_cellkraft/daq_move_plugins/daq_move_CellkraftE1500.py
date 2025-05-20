@@ -6,12 +6,10 @@ from pymodaq.utils.daq_utils import ThreadCommand  # object used to send info ba
 from pymodaq.utils.parameter import Parameter
 from pymodaq_plugins_cellkraft.hardware.cellkraft.Eseries import CellKraftE1500Drivers, Eseries_Config
 
-#class PythonWrapperOfYourInstrument:
-#    pass
 
 class DAQ_Move_CellkraftE1500(DAQ_Move_base):
     """ Instrument plugin class for an actuator.
-    
+
     This object inherits all functionalities to communicate with PyMoDAQ’s DAQ_Move module through inheritance via
     DAQ_Move_base. It makes a bridge between the DAQ_Move module and the Python wrapper of a particular instrument.
 
@@ -27,13 +25,13 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
     controller: object
         The particular object that allow the communication with the hardware, in general a python wrapper around the
          hardware library.
-         
+
     # TODO add your particular attributes here if any
 
     """
     is_multiaxes = False  # TODO for your plugin set to True if this plugin is controlled for a multiaxis controller
     _axis_names: Union[List[str], Dict[str, int]] = ['Axis1', 'Axis2']  # TODO for your plugin: complete the list
-    _controller_units: Union[str, List[str]] = 'mm'  # TODO for your plugin: put the correct unit here, it could be
+    _controller_units: Union[str, List[str]] = ['g/min']  # TODO for your plugin: put the correct unit here, it could be
     # TODO  a single str (the same one is applied to all axes) or a list of str (as much as the number of axes)
     _epsilon: Union[float, List[float]] = 0.1  # TODO replace this by a value that is correct depending on your controller
     # TODO it could be a single float of a list of float (as much as the number of axes)
@@ -65,10 +63,18 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         float: The position obtained after scaling conversion.
         """
         ## TODO for your custom plugin
-        raise NotImplemented  # when writing your own plugin remove this line
-        pos = DataActuator(data=self.controller.your_method_to_get_the_actuator_value())  # when writing your own plugin replace this line
-        pos = self.get_position_with_scaling(pos)
-        return pos
+        flow = DataActuator(data=self.controller.Get_Flow())
+        # pressure = DataActuator(data=self.controller.Get_Pressure())
+        # air_H = DataActuator(data=self.controller.Get_Air_H)
+        # steam_T = DataActuator(data=self.controller.Get_Steam_T)
+        # tube_T = DataActuator(data=self.controller.Get_Tube_T)
+        flow = self.get_position_with_scaling(flow)
+        # pressure = self.get_position_with_scaling(pressure)
+        # air_H = self.get_position_with_scaling(air_H)
+        # steam_T = self.get_position_with_scaling(steam_T)
+        # tube_T = self.get_position_with_scaling(tube_T)
+        # return [flow, pressure, air_H, steam_T, tube_T]
+        return flow
 
     def user_condition_to_reach_target(self) -> bool:
         """ Implement a condition for exiting the polling mechanism and specifying that the
@@ -86,9 +92,7 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
 
     def close(self):
         """Terminate the communication protocol"""
-        ## TODO for your custom plugin
-        raise NotImplemented  # when writing your own plugin remove this line
-        #  self.controller.your_method_to_terminate_the_communication()  # when writing your own plugin replace this line
+        self.controller.close()
 
     def commit_settings(self, param: Parameter):
         """Apply the consequences of a change of value in the detector settings
@@ -132,8 +136,9 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
             # todo: enter here whatever is needed for your controller initialization and eventual
             #  opening of the communication channel
 
-        info = "Whatever info you want to log"
-        initialized = self.controller.init_hardware()  # todo
+        self.controller.init_hardware()
+        info = "Initialized"
+        initialized = True
         return info, initialized
 
     def move_abs(self, value: DataActuator):
@@ -144,13 +149,16 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         value: (float) value of the absolute target positioning
         """
 
-        value = self.check_bound(value)  #if user checked bounds, the defined bounds are applied here
+        value = self.check_bound(value)  # if user checked bounds, the defined bounds are applied here
         self.target_value = value
         value = self.set_position_with_scaling(value)  # apply scaling if the user specified one
-        ## TODO for your custom plugin
-        raise NotImplemented  # when writing your own plugin remove this line
-        self.controller.your_method_to_set_an_absolute_value(value.value())  # when writing your own plugin replace this line
-        self.emit_status(ThreadCommand('Update_Status', ['Some info you want to log']))
+
+        if not value.value() < 5:
+            self.controller.SP_Flow(1)
+        else:
+            self.controller.SP_Flow(int(value.value()))
+
+        self.emit_status(ThreadCommand('Update_Status', ['Value set to {}'.format(value)]))
 
     def move_rel(self, value: DataActuator):
         """ Move the actuator to the relative target actuator value defined by value
@@ -163,9 +171,11 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         self.target_value = value + self.current_position
         value = self.set_position_relative_with_scaling(value)
 
-        ## TODO for your custom plugin
-        raise NotImplemented  # when writing your own plugin remove this line
-        self.controller.your_method_to_set_a_relative_value(value.value())  # when writing your own plugin replace this line
+        if not value.value() < 5:
+            self.controller.SP_Flow(1)
+        else:
+            self.controller.SP_Flow(int(self.target_value.value()))
+
         self.emit_status(ThreadCommand('Update_Status', ['Some info you want to log']))
 
     def move_home(self):
