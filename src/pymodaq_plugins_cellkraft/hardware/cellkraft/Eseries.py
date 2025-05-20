@@ -424,3 +424,17 @@ class CellKraftE1500Drivers:
 if __name__ == "__main__":
     test = CellKraftE1500Drivers("cet-cc01-gen01.insa-lyon.fr")
     print(test.registers["PumpSetMode"])
+
+    test.Pump(1)
+    test.PumpSetMode("manual")
+    test.PumpSetMode("auto")
+    test.SP_Flow(0)
+    test.Pump(0)
+
+    test.Get_Flow()
+    test.Get_Pressure()
+
+    test.stop()
+    test.close()
+
+    print("End")
