@@ -8,10 +8,17 @@ from pymodaq_plugins_cellkraft.hardware.cellkraft.Eseries import CellKraftE1500D
 
 
 class DAQ_Move_CellkraftE1500(DAQ_Move_base):
-    """ Instrument plugin class for an actuator.
+    """
 
-    This object inherits all functionalities to communicate with PyMoDAQ’s DAQ_Move module through inheritance via
-    DAQ_Move_base. It makes a bridge between the DAQ_Move module and the Python wrapper of a particular instrument.
+    Si des "m" sont devant les unitées dans le dashboard, copier cela dans le config_pymodaq.toml:
+    [actuator]
+    epsilon_default = 1
+    polling_interval_ms = 100
+    polling_timeout_s = 20  # s
+    refresh_timeout_ms = 500  # ms
+    siprefix = false
+    siprefix_even_without_units = false
+    display_units = true
 
     TODO Complete the docstring of your plugin with:
         * The set of controllers and actuators that should be compatible with this instrument plugin.
@@ -84,7 +91,7 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         -------
         bool: if True, PyMoDAQ considers the target value has been reached
         """
-        # TODO either delete this method if the usual polling is fine with you, but if need you can
+        #  either delete this method if the usual polling is fine with you, but if need you can
         #  add here some other condition to be fullfilled either a completely new one or
         #  using or/and operations between the epsilon_bool and some other custom booleans
         #  for a usage example see DAQ_Move_brushlessMotor from the Thorlabs plugin
@@ -114,6 +121,7 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         else:
             pass
 
+
     def ini_stage(self, controller=None):
         """Actuator communication initialization
 
@@ -128,17 +136,17 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         initialized: bool
             False if initialization failed otherwise True
         """
-        # raise NotImplemented  # TODO when writing your own plugin remove this line and modify the ones below
         self.ini_stage_init(slave_controller=controller)  # will be useful when controller is slave
 
         if self.is_master:  # is needed when controller is master
             self.controller = CellKraftE1500Drivers(self.settings['host'])  # arguments for instantiation!)
-            # todo: enter here whatever is needed for your controller initialization and eventual
+            #  enter here whatever is needed for your controller initialization and eventual
             #  opening of the communication channel
 
         self.controller.init_hardware()
         info = "Initialized"
         initialized = True
+        # initialized = self.controller.init_hardware()
         return info, initialized
 
     def move_abs(self, value: DataActuator):
@@ -179,7 +187,9 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         self.emit_status(ThreadCommand('Update_Status', ['Some info you want to log']))
 
     def move_home(self):
-        """Call the reference method of the controller"""
+        """
+        Set the value to 0 / can change this value later
+        """
 
         ## TODO for your custom plugin
         raise NotImplemented  # when writing your own plugin remove this line
@@ -187,7 +197,9 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         self.emit_status(ThreadCommand('Update_Status', ['Some info you want to log']))
 
     def stop_motion(self):
-        """Stop the actuator and emits move_done signal"""
+        """
+        Stop the actuator and emits move_done signal
+        Pump is the only one that can be stopped, the other are just values that we change
 
         ## TODO for your custom plugin
         raise NotImplemented  # when writing your own plugin remove this line
