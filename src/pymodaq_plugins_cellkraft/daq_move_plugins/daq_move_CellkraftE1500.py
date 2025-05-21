@@ -5,7 +5,9 @@ from pymodaq.control_modules.move_utility_classes import DAQ_Move_base, comon_pa
 from pymodaq.utils.daq_utils import ThreadCommand  # object used to send info back to the main thread
 from pymodaq.utils.parameter import Parameter
 from pymodaq_plugins_cellkraft.hardware.cellkraft.Eseries import CellKraftE1500Drivers, Eseries_Config
+from pymodaq_utils.logger import set_logger, get_module_name
 
+logger = set_logger(get_module_name(__file__))
 
 class DAQ_Move_CellkraftE1500(DAQ_Move_base):
     """
