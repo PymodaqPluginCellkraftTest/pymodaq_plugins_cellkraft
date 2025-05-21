@@ -20,46 +20,28 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
     siprefix_even_without_units = false
     display_units = true
 
-    TODO Complete the docstring of your plugin with:
-        * The set of controllers and actuators that should be compatible with this instrument plugin.
-        * With which instrument and controller it has been tested.
-        * The version of PyMoDAQ during the test.
-        * The version of the operating system.
-        * Installation instructions: what manufacturer’s drivers should be installed to make it run?
-
-    Attributes:
-    -----------
-    controller: object
-        The particular object that allow the communication with the hardware, in general a python wrapper around the
-         hardware library.
-
-    # TODO add your particular attributes here if any
-
     """
-    is_multiaxes = False  # TODO for your plugin set to True if this plugin is controlled for a multiaxis controller
-    _axis_names: Union[List[str], Dict[str, int]] = ['Axis1', 'Axis2']  # TODO for your plugin: complete the list
-    _controller_units: Union[str, List[str]] = ['g/min']  # TODO for your plugin: put the correct unit here, it could be
-    # TODO  a single str (the same one is applied to all axes) or a list of str (as much as the number of axes)
-    _epsilon: Union[float, List[float]] = 0.1  # TODO replace this by a value that is correct depending on your controller
-    # TODO it could be a single float of a list of float (as much as the number of axes)
-    data_actuator_type = DataActuatorType.DataActuator  # wether you use the new data style for actuator otherwise set this
-    # as  DataActuatorType.float  (or entirely remove the line)
+    is_multiaxes = True
+
+    _axis_names: Union[List[str], Dict[str, str]] = ['Flow', 'Pressure', 'Steam_Temperature', 'Tube_Temperature', 'RH']
+    _controller_units: Union[str, List[str]] = ['g/min', "bar", '°C', '°C', '%']
+    _epsilon: Union[float, List[float]] = [0.1, 0.1, 0.1, 0.1, 1]
+
+    data_actuator_type = DataActuatorType.DataActuator
 
     params = [{'title': 'Device:', 'name': 'device', 'type': 'str', 'value': 'Cellkraft E1500 Series',
                'readonly': True},
               {'title': 'Host:', 'name': 'host', 'type': 'str', 'value': 'cet-cc01-gen01.insa-lyon.fr'},
               {'title': 'Comments:', 'name': 'comment', 'type': 'text', 'value': ''},
-              ] + comon_parameters_fun(is_multiaxes, axis_names=_axis_names, epsilon=_epsilon)
+              ] + comon_parameters_fun(is_multiaxes=is_multiaxes, axis_names=_axis_names, epsilon=_epsilon)
 
-    # _epsilon is the initial default value for the epsilon parameter allowing pymodaq to know if the controller reached
-    # the target value. It is the developer responsibility to put here a meaningful value
+    current_axes: str
 
     def ini_attributes(self):
-        #  TODO declare the type of the wrapper (and assign it to self.controller) you're going to use for easy
-        #  autocompletion
-        self.controller: CellKraftE1500Drivers = None
-
-        #TODO declare here attributes you want/need to init with a default value
+        self.controller: CellKraftE1500Drivers
+        self.current_axes = self.settings.child('multiaxes','axis').value()
+        self.controller.PumpSetMode("auto")
+        # declare here attributes you want/need to init with a default value
         pass
 
     def get_actuator_value(self):
@@ -69,19 +51,35 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         -------
         float: The position obtained after scaling conversion.
         """
-        ## TODO for your custom plugin
-        flow = DataActuator(data=self.controller.Get_Flow())
-        # pressure = DataActuator(data=self.controller.Get_Pressure())
-        # air_H = DataActuator(data=self.controller.Get_Air_H)
-        # steam_T = DataActuator(data=self.controller.Get_Steam_T)
-        # tube_T = DataActuator(data=self.controller.Get_Tube_T)
-        flow = self.get_position_with_scaling(flow)
-        # pressure = self.get_position_with_scaling(pressure)
-        # air_H = self.get_position_with_scaling(air_H)
-        # steam_T = self.get_position_with_scaling(steam_T)
-        # tube_T = self.get_position_with_scaling(tube_T)
-        # return [flow, pressure, air_H, steam_T, tube_T]
-        return flow
+        if self.current_axes == 'flow':
+            flow = DataActuator(data=self.controller.Get_Flow())
+            flow = self.get_position_with_scaling(flow)
+            return flow
+
+        elif self.current_axes == 'pressure':
+            pressure = DataActuator(data=self.controller.Get_Pressure())
+            pressure = self.get_position_with_scaling(pressure)
+            return pressure
+
+        elif self.current_axes == 'rh':
+            air_H = DataActuator(data=self.controller.Get_Air_H)
+            air_H = self.get_position_with_scaling(air_H)
+            return air_H
+
+        elif self.current_axes == 'Steam_temperature':
+            Steam_T = DataActuator(data=self.controller.Get_Steam_T)
+            steam_T = self.get_position_with_scaling(Steam_T)
+            return steam_T
+
+        elif self.current_axes == 'Tube_temperature':
+            tube_T = DataActuator(data=self.controller.Get_Tube_T)
+            tube_T = self.get_position_with_scaling(tube_T)
+            return tube_T
+        else:
+            flow = DataActuator(data=self.controller.Get_Flow())
+            flow = self.get_position_with_scaling(flow)
+            return flow
+
 
     def user_condition_to_reach_target(self) -> bool:
         """ Implement a condition for exiting the polling mechanism and specifying that the
@@ -109,17 +107,32 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         param: Parameter
             A given parameter (within detector_settings) whose value has been changed by the user
         """
-        ## TODO for your custom plugin
         if param.name() == 'axis':
-            self.axis_unit = self.controller.your_method_to_get_correct_axis_unit()
-            # do this only if you can and if the units are not known beforehand, for instance
-            # if the motors connected to the controller are of different type (mm, µm, nm, , etc...)
-            # see BrushlessDCMotor from the thorlabs plugin for an exemple
+            if param.value() == 'Flow':
+                self.axis_unit = self._controller_units[0]
+                self.settings.child('units').value = self._controller_units[0]
+                self.current_axes = 'flow'
 
-        elif param.name() == "a_parameter_you've_added_in_self.params":
-            self.controller.your_method_to_apply_this_param_change()
-        else:
-            pass
+            elif param.value() == 'Pressure':
+                self.axis_unit = self._controller_units[1]
+                self.settings.child('units').value = self._controller_units[1]
+                self.current_axes = 'pressure'
+
+            elif param.value() == 'Steam_Temperature':
+                self.axis_unit = self._controller_units[2]
+                self.settings.child('units').value = self._controller_units[2]
+                self.current_axes = 'Steam_temperature'
+
+            elif param.value() == 'Tube_Temperature':
+                self.axis_unit = self._controller_units[2]
+                self.settings.child('units').value = self._controller_units[2]
+                self.current_axes = 'Steam_temperature'
+
+            elif param.value() == 'RH':
+                self.axis_unit = self._controller_units[3]
+                self.settings.child('units').value = self._controller_units[3]
+                self.current_axes = 'rh'
+        pass
 
 
     def ini_stage(self, controller=None):
@@ -161,12 +174,7 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         self.target_value = value
         value = self.set_position_with_scaling(value)  # apply scaling if the user specified one
 
-        if not value.value() < 5:
-            self.controller.SP_Flow(1)
-        else:
-            self.controller.SP_Flow(int(value.value()))
-
-        self.emit_status(ThreadCommand('Update_Status', ['Value set to {}'.format(value)]))
+        self.move_value(value)
 
     def move_rel(self, value: DataActuator):
         """ Move the actuator to the relative target actuator value defined by value
@@ -179,32 +187,78 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         self.target_value = value + self.current_position
         value = self.set_position_relative_with_scaling(value)
 
-        if not value.value() < 5:
-            self.controller.SP_Flow(1)
-        else:
-            self.controller.SP_Flow(int(self.target_value.value()))
+        self.move_value(value)
 
-        self.emit_status(ThreadCommand('Update_Status', ['Some info you want to log']))
+    def move_value(self, value):
+        """ Move the actuator to the target actuator value defined by value
+        / Used by move_rel and move_abs \
+        Parameters
+        ----------
+        value: (float) value of the target positioning
+        """
+        if self.current_axes == 'Flow':
+            if not value.value() < 5:
+                self.emit_status(ThreadCommand('Update_Status', ['WARNING - Flow have to be < 5']))
+                self.controller.SP_Flow(1)
+            else:
+                self.controller.SP_Flow(int(value.value()))
+            self.emit_status(ThreadCommand('Update_Status', ['Flow set to {}'.format(value)]))
+
+        elif self.current_axes == 'Pressure':
+            if not value.value() < 110:  # Peut etre modifier la limite si besoin #
+                self.emit_status(ThreadCommand('Update_Status', ['WARNING - Pressure have to be < 110']))
+                self.controller.Pump(100)
+            else:
+                self.controller.Pump(int(value.value()))
+            self.emit_status(ThreadCommand('Update_Status', ['Pressure set to {}'.format(value)]))
+
+        elif self.current_axes == 'RH':
+            if not value.value() < 110:  # Peut etre modifier la limite si besoin #
+                self.emit_status(ThreadCommand('Update_Status', ['WARNING - RH have to be < 110']))
+                self.controller.RH(105)
+            else:
+                self.controller.RH(int(value.value()))
+            self.emit_status(ThreadCommand('Update_Status', ['RH set to {}'.format(value)]))
+
+        elif self.current_axes == 'Steam_Temperature':
+            if not value.value() < 30:  # Peut etre modifier la limite si besoin #
+                self.emit_status(ThreadCommand('Update_Status', ['WARNING - Steam_Temp have to be < 30']))
+                self.controller.SP_SteamT(10)
+            else:
+                self.controller.SP_SteamT(int(value.value()))
+            self.emit_status(ThreadCommand('Update_Status', ['Steam_Temp set to {}'.format(value)]))
+
+        elif self.current_axes == 'Tube_Temperature':
+            if not value.value() < 30:  # Peut etre modifier la limite si besoin #
+                self.emit_status(ThreadCommand('Update_Status', ['WARNING - Tube_Temp have to be < 30']))
+                self.controller.SP_Tube_Temp(10)
+            else:
+                self.controller.SP_Tube_Temp(int(value.value()))
+            self.emit_status(ThreadCommand('Update_Status', ['Tube_Temp set to {}'.format(value)]))
+
+        else:
+            self.emit_status(ThreadCommand('Update_Status', ['WARNING - Nothing moved - Problem with current_axes variable in daq_move_CELLkraftE1500.py - WARNING']))
 
     def move_home(self):
         """
         Set the value to 0 / can change this value later
         """
 
-        ## TODO for your custom plugin
-        raise NotImplemented  # when writing your own plugin remove this line
-        self.controller.your_method_to_get_to_a_known_reference()  # when writing your own plugin replace this line
-        self.emit_status(ThreadCommand('Update_Status', ['Some info you want to log']))
+        self.move_value(0)
 
     def stop_motion(self):
         """
         Stop the actuator and emits move_done signal
         Pump is the only one that can be stopped, the other are just values that we change
 
-        ## TODO for your custom plugin
-        raise NotImplemented  # when writing your own plugin remove this line
-        self.controller.your_method_to_stop_positioning()  # when writing your own plugin replace this line
-        self.emit_status(ThreadCommand('Update_Status', ['Some info you want to log']))
+        Notes :
+        La fonction stop en l'etat ne sert a rien car elle renvoie vers SP_Flow(0),
+        mais mieux vaut la garder pour de futur modifications
+        / fonction stop a supprimer si aucune modif faite
+        """
+        if self.current_axes == 'flow':
+            self.controller.stop()
+            self.emit_status(ThreadCommand('Update_Status', ['Flow Stopped']))
 
 
 if __name__ == '__main__':
