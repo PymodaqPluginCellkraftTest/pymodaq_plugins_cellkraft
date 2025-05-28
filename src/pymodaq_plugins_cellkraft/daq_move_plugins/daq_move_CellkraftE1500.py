@@ -13,7 +13,24 @@ logger = set_logger(get_module_name(__file__))
 class DAQ_Move_CellkraftE1500(DAQ_Move_base):
     """
 
-    Si des "m" sont devant les unitées dans le dashboard, copier cela dans le config_pymodaq.toml:
+    pymodaq Version 5.0.11
+    pymodaq-data Version 5.0.23
+
+    Limites thérorique a ne pas dépasser :
+            - Flow : 2 g/min                                                                - modifiable - move
+           X- Pressure : 10 bar (pression trop importante peut endommager les composants)   - non modifiable - viewer0D
+            - Steam Temperature : 180 °C                                                    - modifiable - move
+            - Tube Temperature : 200 °C                                                     - modifiable - move
+            - RH (Relative Humidity) : 80%                                                  - modifiable ? - move ?
+
+    - Modifiez le fichier : ...\site-packages\pymodaq\control_modules\daq_move.py
+    - A la ligne  615, modifiez :
+    - self.ui.set_unit_as_suffix(self.get_unit_to_display(unit))
+    - en
+    - self.ui.set_unit_as_suffix(unit)
+    - Cela empeche la conversion des unites rentrée dans _controller_units
+
+    - Si des "m" sont devant les unitées dans le dashboard, copier cela dans le config_pymodaq.toml:
     [actuator]
     epsilon_default = 1
     polling_interval_ms = 100
@@ -24,11 +41,11 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
     display_units = true
 
     """
-    is_multiaxes = True
+    is_multiaxes = False
 
-    _axis_names: Union[List[str], Dict[str, str]] = ['Flow', 'Pressure', 'Steam_Temperature', 'Tube_Temperature', 'RH']
-    _controller_units: Union[str, List[str]] = ['g/min', "bar", '°C', '°C', '%']
-    _epsilon: Union[float, List[float]] = [0.1, 0.1, 0.1, 0.1, 1]
+    _axis_names: Union[List[str], Dict[str, str]] = ['Flow', 'Steam_Temperature', 'Tube_Temperature', 'RH']
+    _controller_units: Union[str, List[str]] = ['g/min', '°C', '°C', '%']
+    _epsilon: Union[float, List[float]] = [0.1, 0.1, 0.1, 1]
 
     data_actuator_type = DataActuatorType.DataActuator
 
@@ -59,13 +76,8 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
             flow = self.get_position_with_scaling(flow)
             return flow
 
-        elif self.current_axes == 'pressure':
-            pressure = DataActuator(data=self.controller.Get_Pressure())
-            pressure = self.get_position_with_scaling(pressure)
-            return pressure
-
-        elif self.current_axes == 'rh':
-            air_H = DataActuator(data=self.controller.Get_Air_H)
+        elif self.current_axes == 'RH':
+            air_H = DataActuator(data=self.controller.Get_Air_H())
             air_H = self.get_position_with_scaling(air_H)
             return air_H
 
@@ -117,7 +129,7 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
                 self.settings.child('units').value = self._controller_units[0]
                 self.current_axes = 'flow'
 
-            elif param.value() == 'Pressure':
+            elif param.value() == 'Steam_Temperature':
                 self.axis_unit = self._controller_units[1]
                 self.settings.child('units').value = self._controller_units[1]
                 self.current_axes = 'pressure'
