@@ -9,6 +9,7 @@ from pymodaq_utils.logger import set_logger, get_module_name
 
 logger = set_logger(get_module_name(__file__))
 
+
 class DAQ_Move_CellkraftE1500(DAQ_Move_base):
     """
 
@@ -77,6 +78,7 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
             tube_T = DataActuator(data=self.controller.Get_Tube_T)
             tube_T = self.get_position_with_scaling(tube_T)
             return tube_T
+
         else:
             flow = DataActuator(data=self.controller.Get_Flow())
             flow = self.get_position_with_scaling(flow)

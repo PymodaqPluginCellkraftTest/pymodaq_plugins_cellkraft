@@ -260,6 +260,8 @@ class CellKraftE1500Drivers:
         """
         self.instr.close()
 
+# ------------------------------------------------------ #
+
     def PumpSetMode(self, value: str = "auto"):
         """Writing the pump mode
 
@@ -297,7 +299,9 @@ class CellKraftE1500Drivers:
         else:
             raise (TypeError, f"type(pump_power) passed to {self.__qualname__}.RH() must but int")
 
-    def SP_SteamT(self, temperature: int=10):
+# ------------------------------------------------------ #
+
+    def SP_SteamT(self, temperature: int | float=10):
         """Set the SP Steam temperature in °C
 
         :param temperature: int in °C
