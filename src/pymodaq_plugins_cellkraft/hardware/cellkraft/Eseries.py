@@ -171,9 +171,10 @@ class CellKraftE1500Drivers:
             "mode": "write"
         }
         self.registers["Pump"] = {
-            "method": self.Pump,
+            "method": self.Write_Pump,
             "reference": config_dict[1500]["Pump"]["reference"],
-            "register": config_dict[1500]["Pump"]["reference"].write_address.value,
+            "write_register": config_dict[1500]["Pump"]["reference"].write_address.value,
+            "read_register": config_dict[1500]["Pump"]["reference"].read_address.value,
             "mode": "write",
             "scaling": config_dict[1500]["Pump"]["reference"].scaling.value
         }
@@ -202,7 +203,8 @@ class CellKraftE1500Drivers:
             "method": self.SP_Tube_Temp,
             "reference": config_dict[1500]["Tube"]["reference"],
             "register": config_dict[1500]["Tube"]["reference"].write_address.value,
-            "mode": "write"
+            "mode": "write",
+            "scaling": config_dict[1500]["Tube"]["reference"].write_scaling.value
         }
         self.registers["Get_Steam_T"] = {
             "method": self.Get_Steam_T,
@@ -245,6 +247,7 @@ class CellKraftE1500Drivers:
 
         """
         self.init = self.instr.ini_hw()
+        return self.init
 
     def stop(self):
         """Stop procedure
@@ -265,6 +268,15 @@ class CellKraftE1500Drivers:
     def PumpSetMode(self, value: str = "auto"):
         """Writing the pump mode
 
+        Auto : La pompe fonctionne automatiquement,
+        sûrement en fonction des besoins du système.
+
+        Manual : La pompe fonctionne en mode manuel,
+        l'utilisateur doit contrôler son fonctionnement manuellement.
+
+        Prime : Ce mode est généralement utilisé pour amorcer la pompe,
+        pour remplir le système avec du liquide avant de commencer le fonctionnement normal.
+
         :param value: human-readable equivalent of the 3 allowed values (0 auto, 1 manual, 2 prime) defaulting to auto
         """
 
@@ -284,20 +296,28 @@ class CellKraftE1500Drivers:
         except Exception as e:
             raise (Exception, f"error in {self.__qualname__}")
 
-    def Pump(self, pump_power: int=100):
+    def Write_Pump(self, pump_power: int=100):
         """Set the pump power in %
 
         :param pump_power: int% pump power
         """
+        pump_power = int(pump_power*self.registers["Pump"]["scaling"])
+        try:
+            self.instr.write(self.registers["Pump"]["write_register"], pump_power)
+        except Exception as e:
+            raise Exception
+        return pump_power
 
-        if isinstance(pump_power, int):
-            try:
-                self.instr.write(self.registers["Pump"]["register"],
-                                 pump_power*self.registers["Pump"]["scaling"])
-            except Exception as e:
-                raise Exception
+    def Read_Pump(self):
+        """Get the pump power in %
+
+        :return pump_power: int% pump power
+        """
+        pump_power = self.instr.read(self.registers["Pump"]["read_register"])
+        if isinstance(pump_power, Exception):
+            raise pump_power
         else:
-            raise (TypeError, f"type(pump_power) passed to {self.__qualname__}.RH() must but int")
+            return pump_power.registers[0] / self.registers["Pump"]["scaling"]
 
 # ------------------------------------------------------ #
 
@@ -307,63 +327,51 @@ class CellKraftE1500Drivers:
         :param temperature: int in °C
         :return:
         """
+        temperature = int(temperature * self.registers["SP_SteamT"]["scaling"]) # Scaling => 1
+        try:
+            self.instr.write(self.registers["SP_SteamT"]["register"], temperature)
+        except Exception as e:
+            raise Exception
+        return temperature
 
-        if isinstance(temperature, int):
-            try:
-
-                self.instr.write(self.registers["SP_SteamT"]["register"],
-                                 temperature)
-            except Exception as e:
-                raise Exception
-        else:
-            raise (TypeError, f"type(temperature) passed to {self.__qualname__}.SP_vapT must be an int") # add {self.__class__.__name__}. ?
-
-    def RH(self, relativehumidity: int=105):
+    def RH(self, relativehumidity: int | float =105):
         """Set the relative humidity in %
 
         :param relativehumidity: int% relative humdity
         """
+        relativehumidity = int(relativehumidity * self.registers["RH"]["scaling"]) # Scaling => 10
+        try:
+            self.instr.write(self.registers["RH"]["register"], relativehumidity)
+        except Exception as e:
+            raise Exception
+        return relativehumidity
 
-        if isinstance(relativehumidity, int):
-            try:
-                self.instr.write(self.registers["RH"]["register"],
-                                 relativehumidity*self.registers["RH"]["scaling"])
-            except Exception as e:
-                raise Exception
-        else:
-            raise (TypeError, f"type(relativehumidity) passed to {self.__qualname__}.RH() must but int")
-
-    def SP_Flow(self, flow: int):
+    def SP_Flow(self, flow: int | float):
         """Set the flow in g/min
 
         :param flow:
         """
+        flow = int(flow*self.registers["SP_Flow"]["scaling"]) # Scaling => 10
+        try:
+            self.instr.write(self.registers["SP_Flow"]["register"], flow)
+        except Exception as e:
+            raise Exception
+        return flow
 
-        if isinstance(flow, int):
-            try:
-
-                self.instr.write(self.registers["SP_Flow"]["register"],
-                                 flow*self.registers["SP_Flow"]["scaling"])
-            except Exception as e:
-                raise Exception
-        else:
-            raise (TypeError, f"type(flow) passed to {self.__qualname__}.SP_Flow() must but int")
-
-    def SP_Tube_Temp(self, temperature: int):
+    def SP_Tube_Temp(self, temperature: int | float):
         """Set the tube temperature
 
         :param int: tube temperature setpoint
         :return:
         """
+        temperature = int(temperature * self.registers["SP_Tube_Temp"]["scaling"]) # Scaling => 10
+        try:
+            self.instr.write(self.registers["SP_Tube_Temp"]["register"], temperature)
+        except Exception as e:
+            raise Exception
+        return temperature
 
-        if isinstance(temperature, int):
-            try:
-                self.instr.write(self.registers["SP_Tube_Temp"]["register"],
-                                 temperature)
-            except Exception as e:
-                raise Exception
-        else:
-            raise (TypeError, f"type(temperature) passed to {self.__qualname__}.SP_Tube_Temp() must but int")
+# ------------------------------------------------------ #
 
     def Get_Steam_T(self):
         """Get the steam temperature
@@ -427,18 +435,20 @@ class CellKraftE1500Drivers:
 
 if __name__ == "__main__":
     test = CellKraftE1500Drivers("cet-cc01-gen01.insa-lyon.fr")
-    print(test.registers["PumpSetMode"])
+    test.RH(26.2)
+    print("start")
+    # print(test.registers["PumpSetMode"])
 
-    test.Pump(1)
-    test.PumpSetMode("manual")
-    test.PumpSetMode("auto")
-    test.SP_Flow(0)
-    test.Pump(0)
+    # test.Pump(1)
+    # test.PumpSetMode("manual")
+    # test.PumpSetMode("auto")
+    # test.SP_Flow(1.2)
+    # test.Pump(0)
 
-    test.Get_Flow()
-    test.Get_Pressure()
+    # test.Get_Flow()
+    # test.Get_Pressure()
 
-    test.stop()
-    test.close()
+    # test.stop()
+    # test.close()
 
-    print("End")
+    # print("End")

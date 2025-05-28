@@ -46,7 +46,7 @@ class SyncModBusInstrument:
         try:
             self.modbus.connect()
             self.connected = True
-            return True
+            return self.connected
         except:
             return False
 

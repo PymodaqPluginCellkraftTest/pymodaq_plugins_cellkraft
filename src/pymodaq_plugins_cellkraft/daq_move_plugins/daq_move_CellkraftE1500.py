@@ -52,17 +52,63 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
     params = [{'title': 'Device:', 'name': 'device', 'type': 'str', 'value': 'Cellkraft E1500 Series',
                'readonly': True},
               {'title': 'Host:', 'name': 'host', 'type': 'str', 'value': 'cet-cc01-gen01.insa-lyon.fr'},
-              {'title': 'Comments:', 'name': 'comment', 'type': 'text', 'value': ''},
+              {'title': 'Write Limit:', 'name': 'limit', 'type': 'str', 'value': 'Nothing'},
+              {'title': 'Info:', 'name': 'info', 'type': 'str', 'value': 'Nothing', 'readonly': True},
               ] + comon_parameters_fun(is_multiaxes=is_multiaxes, axis_names=_axis_names, epsilon=_epsilon)
+
+    # Information sur chaque actuateurs
+    desc = {'Flow': "Lecture en 0.1 près, Ecriture en 0.1 près\n"
+                    "En cas de dépassement de cette limite, "
+                    "le surplus sera effacé (exemple : 1.25 va ressortir en 1.2)",
+
+            'Steam_Temperature': "Lecture en 0.1 près, Ecriture en 1 près\n"
+                    "En cas de dépassement de cette limite, "
+                    "le surplus sera effacé (exemple : 100.1 va ressortir en 100)",
+
+            'Tube_Temperature': "Lecture en 0.1 près, Ecriture en 0.1 près\n"
+                    "En cas de dépassement de cette limite, "
+                    "le surplus sera effacé (exemple : 100.25 va ressortir en 100.2)",
+
+            'RH': "Lecture en 0.1 près, Ecriture en 0.1 près\n"
+                    "En cas de dépassement de cette limite, "
+                    "le surplus sera effacé (exemple : 95.25 va ressortir en 95.2)",
+            }
+
+    # Limite de valeur pour chaque actuateur, (modifiable dans le dashboard via le show settings)
+    lim = {'Flow': 2.5,
+           'Steam_Temperature': 160,
+           'Tube_Temperature': 160,
+           'RH': 100
+           }
 
     current_axes: str
 
     def ini_attributes(self):
         self.controller: CellKraftE1500Drivers
-        self.current_axes = self.settings.child('multiaxes','axis').value()
-        self.controller.PumpSetMode("auto")
-        # declare here attributes you want/need to init with a default value
+        self.current_axes = self.settings.child('multiaxes', 'axis').value()
+
+        self.change_param()
+
         pass
+
+    def change_param(self):
+
+        if self.current_axes == 'Flow':
+                self.settings.child('info').setValue(self.desc['Flow'])
+                self.settings.child('limit').setValue(self.lim['Flow'])
+
+        elif self.current_axes == 'Steam_Temperature':
+                self.settings.child('info').setValue(self.desc['Steam_Temperature'])
+                self.settings.child('limit').setValue(self.lim['Steam_Temperature'])
+
+        elif self.current_axes == 'Tube_Temperature':
+                self.settings.child('info').setValue(self.desc['Tube_Temperature'])
+                self.settings.child('limit').setValue(self.lim['Tube_Temperature'])
+
+        elif self.current_axes == 'RH':
+                self.settings.child('info').setValue(self.desc['RH'])
+                self.settings.child('limit').setValue(self.lim['RH'])
+
 
     def get_actuator_value(self):
         """Get the current value from the hardware with scaling conversion.
@@ -71,7 +117,7 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         -------
         float: The position obtained after scaling conversion.
         """
-        if self.current_axes == 'flow':
+        if self.current_axes == 'Flow':
             flow = DataActuator(data=self.controller.Get_Flow())
             flow = self.get_position_with_scaling(flow)
             return flow
@@ -81,21 +127,18 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
             air_H = self.get_position_with_scaling(air_H)
             return air_H
 
-        elif self.current_axes == 'Steam_temperature':
-            Steam_T = DataActuator(data=self.controller.Get_Steam_T)
+        elif self.current_axes == 'Steam_Temperature':
+            Steam_T = DataActuator(data=self.controller.Get_Steam_T())
             steam_T = self.get_position_with_scaling(Steam_T)
             return steam_T
 
-        elif self.current_axes == 'Tube_temperature':
-            tube_T = DataActuator(data=self.controller.Get_Tube_T)
+        elif self.current_axes == 'Tube_Temperature':
+            tube_T = DataActuator(data=self.controller.Get_Tube_T())
             tube_T = self.get_position_with_scaling(tube_T)
             return tube_T
 
         else:
-            flow = DataActuator(data=self.controller.Get_Flow())
-            flow = self.get_position_with_scaling(flow)
-            return flow
-
+            self.emit_status(ThreadCommand('Update_Status', ['WARNING - No Axis Selected, self.current_axes can be None']))
 
     def user_condition_to_reach_target(self) -> bool:
         """ Implement a condition for exiting the polling mechanism and specifying that the
@@ -127,29 +170,23 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
             if param.value() == 'Flow':
                 self.axis_unit = self._controller_units[0]
                 self.settings.child('units').value = self._controller_units[0]
-                self.current_axes = 'flow'
+                self.current_axes = 'Flow'
 
             elif param.value() == 'Steam_Temperature':
                 self.axis_unit = self._controller_units[1]
                 self.settings.child('units').value = self._controller_units[1]
-                self.current_axes = 'pressure'
-
-            elif param.value() == 'Steam_Temperature':
-                self.axis_unit = self._controller_units[2]
-                self.settings.child('units').value = self._controller_units[2]
-                self.current_axes = 'Steam_temperature'
+                self.current_axes = 'Steam_Temperature'
 
             elif param.value() == 'Tube_Temperature':
                 self.axis_unit = self._controller_units[2]
                 self.settings.child('units').value = self._controller_units[2]
-                self.current_axes = 'Steam_temperature'
+                self.current_axes = 'Tube_Temperature'
 
             elif param.value() == 'RH':
                 self.axis_unit = self._controller_units[3]
                 self.settings.child('units').value = self._controller_units[3]
-                self.current_axes = 'rh'
+                self.current_axes = 'RH'
         pass
-
 
     def ini_stage(self, controller=None):
         """Actuator communication initialization
@@ -165,17 +202,30 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         initialized: bool
             False if initialization failed otherwise True
         """
-        self.ini_stage_init(slave_controller=controller)  # will be useful when controller is slave
 
-        if self.is_master:  # is needed when controller is master
-            self.controller = CellKraftE1500Drivers(self.settings['host'])  # arguments for instantiation!)
-            #  enter here whatever is needed for your controller initialization and eventual
-            #  opening of the communication channel
+        # Start Debug Master/Slave
+        if controller is None:
+            self.emit_status(ThreadCommand('Update_Status', ['Controller is None - ' + self.current_axes + ' is Master']))
+        else:
+            self.emit_status(ThreadCommand('Update_Status', ['Controller is not None - ' + self.current_axes + ' is Slave']))
+        # End Debug Master/Slave
 
-        self.controller.init_hardware()
+        if self.is_master:  # Master Case : controller == None
+            controller = CellKraftE1500Drivers(self.settings['host'])  # Create control
+            self.controller = controller
+            initialized = self.controller.init_hardware()  # Init connection
+
+        else:  # Slave Case : controller != None
+            self.controller = self.ini_stage_init(slave_controller=controller)
+            initialized = self.controller.instr.connected
+
+        if not initialized:
+            self.emit_status(ThreadCommand('Update_Status', ['WARNING - ' + self.current_axes + ' Stage Not Initialized']))
+
+        initialized = True  # /Debug mode\
+        self.controller.PumpSetMode("auto")
         info = "Initialized"
-        initialized = True
-        # initialized = self.controller.init_hardware()
+
         return info, initialized
 
     def move_abs(self, value: DataActuator):
@@ -212,45 +262,34 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         ----------
         value: (float) value of the target positioning
         """
+        limit = self.settings.child('limit').opts['value']
         if self.current_axes == 'Flow':
-            if not value.value() < 5:
-                self.emit_status(ThreadCommand('Update_Status', ['WARNING - Flow have to be < 5']))
-                self.controller.SP_Flow(1)
+            if not value.value() < float(limit):
+                self.emit_status(ThreadCommand('Update_Status', [f'WARNING - Flow have to be < {limit}']))
             else:
-                self.controller.SP_Flow(int(value.value()))
-            self.emit_status(ThreadCommand('Update_Status', ['Flow set to {}'.format(value)]))
-
-        elif self.current_axes == 'Pressure':
-            if not value.value() < 110:  # Peut etre modifier la limite si besoin #
-                self.emit_status(ThreadCommand('Update_Status', ['WARNING - Pressure have to be < 110']))
-                self.controller.Pump(100)
-            else:
-                self.controller.Pump(int(value.value()))
-            self.emit_status(ThreadCommand('Update_Status', ['Pressure set to {}'.format(value)]))
+                val = self.controller.SP_Flow(value.value())*0.1
+                self.emit_status(ThreadCommand('Update_Status', [f'Flow set to {val}']))
 
         elif self.current_axes == 'RH':
-            if not value.value() < 110:  # Peut etre modifier la limite si besoin #
-                self.emit_status(ThreadCommand('Update_Status', ['WARNING - RH have to be < 110']))
-                self.controller.RH(105)
+            if not value.value() < float(limit):
+                self.emit_status(ThreadCommand('Update_Status', [f'WARNING - RH have to be < {limit}']))
             else:
-                self.controller.RH(int(value.value()))
-            self.emit_status(ThreadCommand('Update_Status', ['RH set to {}'.format(value)]))
+                val = self.controller.RH(value.value())*0.1
+                self.emit_status(ThreadCommand('Update_Status', [f'RH set to {val}']))
 
         elif self.current_axes == 'Steam_Temperature':
-            if not value.value() < 30:  # Peut etre modifier la limite si besoin #
-                self.emit_status(ThreadCommand('Update_Status', ['WARNING - Steam_Temp have to be < 30']))
-                self.controller.SP_SteamT(10)
+            if not value.value() < float(limit):
+                self.emit_status(ThreadCommand('Update_Status', [f'WARNING - Steam_Temp have to be < {limit}']))
             else:
-                self.controller.SP_SteamT(int(value.value()))
-            self.emit_status(ThreadCommand('Update_Status', ['Steam_Temp set to {}'.format(value)]))
+                val = self.controller.SP_SteamT(int(value.value()))
+                self.emit_status(ThreadCommand('Update_Status', [f'Steam_Temp set to {val}']))
 
         elif self.current_axes == 'Tube_Temperature':
-            if not value.value() < 30:  # Peut etre modifier la limite si besoin #
-                self.emit_status(ThreadCommand('Update_Status', ['WARNING - Tube_Temp have to be < 30']))
-                self.controller.SP_Tube_Temp(10)
+            if not value.value() < float(limit):
+                self.emit_status(ThreadCommand('Update_Status', [f'WARNING - Tube_Temp have to be < {limit}']))
             else:
-                self.controller.SP_Tube_Temp(int(value.value()))
-            self.emit_status(ThreadCommand('Update_Status', ['Tube_Temp set to {}'.format(value)]))
+                val = self.controller.SP_Tube_Temp(int(value.value()))*0.1
+                self.emit_status(ThreadCommand('Update_Status', [f'Tube_Temp set to {val}']))
 
         else:
             self.emit_status(ThreadCommand('Update_Status', ['WARNING - Nothing moved - Problem with current_axes variable in daq_move_CELLkraftE1500.py - WARNING']))
@@ -272,7 +311,7 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         mais mieux vaut la garder pour de futur modifications
         / fonction stop a supprimer si aucune modif faite
         """
-        if self.current_axes == 'flow':
+        if self.current_axes == 'Flow':
             self.controller.stop()
             self.emit_status(ThreadCommand('Update_Status', ['Flow Stopped']))
 
