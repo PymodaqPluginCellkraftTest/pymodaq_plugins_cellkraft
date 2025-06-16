@@ -86,14 +86,14 @@ class DAQ_0DViewer_Pressure(DAQ_Viewer_base):
             controller = CellKraftE1500Drivers(self.settings['host'])  # Create control
             self.controller = controller
             initialized = self.controller.init_hardware()  # Init connection
+            info = "Initialized in Master"
 
         else:  # Slave Case : controller != None
             self.controller = self.ini_detector_init(slave_controller=controller)
             initialized = self.controller.instr.connected
+            info = "Initialized in Slave"
 
         initialized = True  # /Debug mode\
-        info = "Initialized"
-
         return info, initialized
 
     def close(self):
@@ -112,12 +112,18 @@ class DAQ_0DViewer_Pressure(DAQ_Viewer_base):
         kwargs: dict
             others optionals arguments
         """
-        # data_tot = randint(1, 99)
         data_tot = self.controller.Get_Pressure()
+        # data_tot = randint(1, 99)  # dev tests
         self.dte_signal.emit(
-            DataToExport(name='Pressure',
+            DataToExport(name='Graph',
                          data=[DataFromPlugins(
-                             name='Mock1', data=data_tot, dim='Data0D', labels=['Pressure in bar'])]))
+                            name='Pressure',
+                            data=data_tot,
+                            dim='Data0D',
+                            labels=['Pressure in bar'])
+                            ]
+                         )
+            )
 
     def stop(self):
         """Stop the current grab hardware wise if necessary"""
