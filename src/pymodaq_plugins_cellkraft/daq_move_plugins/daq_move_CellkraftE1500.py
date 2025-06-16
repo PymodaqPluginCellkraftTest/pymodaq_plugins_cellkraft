@@ -204,27 +204,28 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
         """
 
         # Start Debug Master/Slave
-        if controller is None:
-            self.emit_status(ThreadCommand('Update_Status', ['Controller is None - ' + self.current_axes + ' is Master']))
-        else:
-            self.emit_status(ThreadCommand('Update_Status', ['Controller is not None - ' + self.current_axes + ' is Slave']))
+        # if controller is None:
+        #     self.emit_status(ThreadCommand('Update_Status', [f'Controller is None - {self.current_axes} is Master']))
+        # else:
+        #     self.emit_status(ThreadCommand('Update_Status', [f'Controller is not None - {self.current_axes} is Slave']))
         # End Debug Master/Slave
 
         if self.is_master:  # Master Case : controller == None
             controller = CellKraftE1500Drivers(self.settings['host'])  # Create control
             self.controller = controller
             initialized = self.controller.init_hardware()  # Init connection
+            info = "Initialized in Master"
 
         else:  # Slave Case : controller != None
             self.controller = self.ini_stage_init(slave_controller=controller)
             initialized = self.controller.instr.connected
+            info = "Initialized in Slave"
 
         if not initialized:
-            self.emit_status(ThreadCommand('Update_Status', ['WARNING - ' + self.current_axes + ' Stage Not Initialized']))
+            self.emit_status(ThreadCommand('Update_Status', [f'WARNING - {self.current_axes} - Stage Not Initialized']))
 
         initialized = True  # /Debug mode\
         self.controller.PumpSetMode("auto")
-        info = "Initialized"
 
         return info, initialized
 
