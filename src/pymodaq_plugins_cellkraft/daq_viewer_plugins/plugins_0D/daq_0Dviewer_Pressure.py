@@ -3,7 +3,7 @@ from random import randint  # Debug for grab_data
 from pymodaq.utils.data import DataFromPlugins, DataToExport
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters, main
 from pymodaq.utils.parameter import Parameter
-from pymodaq_plugins_cellkraft.hardware.cellkraft.Eseries import CellKraftE1500Drivers, Eseries_Config
+from pymodaq_plugins_cellkraft.hardware.cellkraft.Eseries import CellKraftE1500Drivers
 
 from pymodaq.utils.logger import set_logger, get_module_name
 
@@ -22,6 +22,9 @@ class DAQ_0DViewer_Pressure(DAQ_Viewer_base):
             - Steam Temperature : 180 °C                                                    - modifiable - move
             - Tube Temperature : 200 °C                                                     - modifiable - move
             - RH (Relative Humidity) : 80%                                                  - modifiable ? - move ?
+
+        Ligne de code pour la longueur de l'history du plot :
+            - ../pymodaq_gui/plotting/data_viewers/viewer0D.py:163
 
         """
 
