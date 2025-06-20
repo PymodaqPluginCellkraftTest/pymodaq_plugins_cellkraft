@@ -43,9 +43,9 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
     """
     is_multiaxes = False
 
-    _axis_names: Union[List[str], Dict[str, str]] = ['Flow', 'Steam_Temperature', 'Tube_Temperature', 'RH']
-    _controller_units: Union[str, List[str]] = ['g/min', '°C', '°C', '%']
-    _epsilon: Union[float, List[float]] = [0.1, 0.1, 0.1, 1]
+    _axis_names: Union[List[str], Dict[str, str]] = ['Flow', 'Steam_Temperature', 'Tube_Temperature', 'RH', 'Pressure']
+    _controller_units: Union[str, List[str]] = ['g/min', '°C', '°C', '%', 'bar']
+    _epsilon: Union[float, List[float]] = [0.1, 0.1, 0.1, 1, 1]
 
     data_actuator_type = DataActuatorType.DataActuator
 
@@ -72,13 +72,15 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
             'RH': "Lecture en 0.1 près, Ecriture en 0.1 près\n"
                     "En cas de dépassement de cette limite, "
                     "le surplus sera effacé (exemple : 95.25 va ressortir en 95.2)",
+            'Pressure': "None"
             }
 
     # Limite de valeur pour chaque actuateur, (modifiable dans le dashboard via le show settings)
     lim = {'Flow': 2.5,
            'Steam_Temperature': 160,
            'Tube_Temperature': 160,
-           'RH': 100
+           'RH': 100,
+           'Pressure': 0
            }
 
     current_axes: str
@@ -109,6 +111,10 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
                 self.settings.child('info').setValue(self.desc['RH'])
                 self.settings.child('limit').setValue(self.lim['RH'])
 
+        elif self.current_axes == 'Pressure':
+                self.settings.child('info').setValue(self.desc['Pressure'])
+                self.settings.child('limit').setValue(self.lim['Pressure'])
+
 
     def get_actuator_value(self):
         """Get the current value from the hardware with scaling conversion.
@@ -136,6 +142,11 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
             tube_T = DataActuator(data=self.controller.Get_Tube_T())
             tube_T = self.get_position_with_scaling(tube_T)
             return tube_T
+
+        elif self.current_axes == 'Pressure':
+            pressure = DataActuator(data=self.controller.Get_Pressure())
+            pressure = self.get_position_with_scaling(pressure)
+            return pressure
 
         else:
             self.emit_status(ThreadCommand('Update_Status', ['WARNING - No Axis Selected, self.current_axes can be None']))
@@ -186,6 +197,11 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
                 self.axis_unit = self._controller_units[3]
                 self.settings.child('units').value = self._controller_units[3]
                 self.current_axes = 'RH'
+
+            elif param.value() == 'Pressure':
+                self.axis_unit = self._controller_units[4]
+                self.settings.child('units').value = self._controller_units[4]
+                self.current_axes = 'Pressure'
         pass
 
     def ini_stage(self, controller=None):
@@ -291,6 +307,9 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
             else:
                 val = self.controller.SP_Tube_Temp(int(value.value()))*0.1
                 self.emit_status(ThreadCommand('Update_Status', [f'Tube_Temp set to {val}']))
+
+        elif self.current_axes == 'Pressure':
+            self.emit_status(ThreadCommand('Update_Status', ["WARNING - Can't modifiy the pressure"]))
 
         else:
             self.emit_status(ThreadCommand('Update_Status', ['WARNING - Nothing moved - Problem with current_axes variable in daq_move_CELLkraftE1500.py - WARNING']))
