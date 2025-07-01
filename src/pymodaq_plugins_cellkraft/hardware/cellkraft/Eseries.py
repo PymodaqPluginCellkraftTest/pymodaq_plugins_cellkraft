@@ -1,28 +1,28 @@
 from pymodaq.utils.logger import set_logger, get_module_name
-logger = set_logger(get_module_name(__file__))
-
 from pymodaq_plugins_cellkraft.hardware.tcpmodbus import SyncModBusInstrument
 from enum import IntEnum
-    # WRITE
-    #
-    # pump control : register 9107 value [0 auto 1 manual 2 prime] default 1
-    # SP temp var °C : register 9300 value [] default 10
-    # RH% : register 9240 default 10
-    # SP flow(g/min) register 9310 default 10
-    # SP TEMP tube °C register 9355
-    # Pump % 9109
-    #
-    # READ
-    #
-    # steam temp 4148
-    # Air humidity 4628
-    # flow (g/min) 6518
-    # pressure(bar) 5268
-    # Tube temp 4468
-    # pump % 6158
-    #
-    # turn down => write 0 to register 9310
-    # read status 6518
+logger = set_logger(get_module_name(__file__))
+# WRITE
+#
+# pump control : register 9107 value [0 auto 1 manual 2 prime] default 1
+# SP temp var °C : register 9300 value [] default 10
+# RH% : register 9240 default 10
+# SP flow(g/min) register 9310 default 10
+# SP TEMP tube °C register 9355
+# Pump % 9109
+#
+# READ
+#
+# steam temp 4148
+# Air humidity 4628
+# flow (g/min) 6518
+# pressure(bar) 5268
+# Tube temp 4468
+# pump % 6158
+#
+# turn down => write 0 to register 9310
+# read status 6518
+
 
 class Pump(IntEnum):
     read_address = 6158
@@ -58,6 +58,7 @@ class Air(IntEnum):
     read_scaling = scaling
     write_scaling = scaling
 
+
 class Flow(IntEnum):
     read_address = 6518
     write_address = 9310
@@ -66,6 +67,7 @@ class Flow(IntEnum):
     read_scaling = scaling
     write_scaling = scaling
 
+
 class Tube(IntEnum):
     read_address = 4468
     write_address = 9355
@@ -73,8 +75,9 @@ class Tube(IntEnum):
     read_scaling = 10
     write_scaling = 10
 
+
 class Pressure(IntEnum):
-    read_address =  5268
+    read_address = 5268
     read_scaling = 100
 
 
@@ -135,10 +138,10 @@ class CellKraftE1500Drivers:
     Relies on a custom tcpmodules based on pymodbus (source : https://github.com/pymodbus-dev/pymodbus
     documentation : https://pymodbus.readthedocs.io/en/latest/)
     """
-    def __init__(self, host, config = None):
+    def __init__(self, host, config=None):
         """Initialize the Steam Generator driver
 
-        :param host: hostname or ip adress
+        :param host: hostname or ip address
         """
         self.instr = SyncModBusInstrument(host)
         self.host = host
@@ -155,7 +158,7 @@ class CellKraftE1500Drivers:
     def ini_register(self, config_dict=None):
         """
         Initialise the register to expose the method/hardware parameters
-        :param dict: Manual Configuration dictionary feeding should be self.config
+        :param config_dict: Manual Configuration dictionary feeding should be self.config
         """
 
         if config_dict is None:
@@ -294,9 +297,9 @@ class CellKraftE1500Drivers:
             self.instr.write(self.registers["PumpSetMode"]["register"],
                              order)
         except Exception as e:
-            raise (Exception, f"error in {self.__qualname__}")
+            raise (Exception, f"error in {self.__qualname__}, {e}")
 
-    def Write_Pump(self, pump_power: int=100):
+    def Write_Pump(self, pump_power: int = 100):
         """Set the pump power in %
 
         :param pump_power: int% pump power
@@ -305,7 +308,7 @@ class CellKraftE1500Drivers:
         try:
             self.instr.write(self.registers["Pump"]["write_register"], pump_power)
         except Exception as e:
-            raise Exception
+            raise (Exception, f"error {e}")
         return pump_power
 
     def Read_Pump(self):
@@ -321,29 +324,29 @@ class CellKraftE1500Drivers:
 
 # ------------------------------------------------------ #
 
-    def SP_SteamT(self, temperature: int | float=10):
+    def SP_SteamT(self, temperature: int | float = 10):
         """Set the SP Steam temperature in °C
 
         :param temperature: int in °C
         :return:
         """
-        temperature = int(temperature * self.registers["SP_SteamT"]["scaling"]) # Scaling => 1
+        temperature = int(temperature * self.registers["SP_SteamT"]["scaling"])  # Scaling => 1
         try:
             self.instr.write(self.registers["SP_SteamT"]["register"], temperature)
         except Exception as e:
-            raise Exception
+            raise (Exception, f"error {e}")
         return temperature
 
-    def RH(self, relativehumidity: int | float =105):
+    def RH(self, relativehumidity: int | float = 105):
         """Set the relative humidity in %
 
-        :param relativehumidity: int% relative humdity
+        :param relativehumidity: int% relative humidity
         """
-        relativehumidity = int(relativehumidity * self.registers["RH"]["scaling"]) # Scaling => 10
+        relativehumidity = int(relativehumidity * self.registers["RH"]["scaling"])  # Scaling => 10
         try:
             self.instr.write(self.registers["RH"]["register"], relativehumidity)
         except Exception as e:
-            raise Exception
+            raise (Exception, f"error {e}")
         return relativehumidity
 
     def SP_Flow(self, flow: int | float):
@@ -351,24 +354,24 @@ class CellKraftE1500Drivers:
 
         :param flow:
         """
-        flow = int(flow*self.registers["SP_Flow"]["scaling"]) # Scaling => 10
+        flow = int(flow*self.registers["SP_Flow"]["scaling"])  # Scaling => 10
         try:
             self.instr.write(self.registers["SP_Flow"]["register"], flow)
         except Exception as e:
-            raise Exception
+            raise (Exception, f"error {e}")
         return flow
 
     def SP_Tube_Temp(self, temperature: int | float):
         """Set the tube temperature
 
-        :param int: tube temperature setpoint
+        :param temperature: tube temperature set point
         :return:
         """
-        temperature = int(temperature * self.registers["SP_Tube_Temp"]["scaling"]) # Scaling => 10
+        temperature = int(temperature * self.registers["SP_Tube_Temp"]["scaling"])  # Scaling => 10
         try:
             self.instr.write(self.registers["SP_Tube_Temp"]["register"], temperature)
         except Exception as e:
-            raise Exception
+            raise (Exception, f"error {e}")
         return temperature
 
 # ------------------------------------------------------ #
@@ -379,11 +382,11 @@ class CellKraftE1500Drivers:
         :return: temperature int °C
         """
 
-        ReadResult = self.instr.read(self.registers["Get_Steam_T"]["register"])
-        if isinstance(ReadResult, Exception):
-            raise ReadResult
+        readresult = self.instr.read(self.registers["Get_Steam_T"]["register"])
+        if isinstance(readresult, Exception):
+            raise readresult
         else:
-            return ReadResult.registers[0]/self.registers["Get_Steam_T"]["scaling"]
+            return readresult.registers[0]/self.registers["Get_Steam_T"]["scaling"]
 
     def Get_Air_H(self):
         """Get the air humidity
@@ -391,11 +394,11 @@ class CellKraftE1500Drivers:
         :return: int %
         """
 
-        ReadResult = self.instr.read(self.registers["Get_Air_H"]["register"])
-        if isinstance(ReadResult, Exception):
-            raise ReadResult
+        readresult = self.instr.read(self.registers["Get_Air_H"]["register"])
+        if isinstance(readresult, Exception):
+            raise readresult
         else:
-            return ReadResult.registers[0]/self.registers["Get_Air_H"]["scaling"]
+            return readresult.registers[0]/self.registers["Get_Air_H"]["scaling"]
 
     def Get_Flow(self):
         """Get the air humidity
@@ -403,11 +406,11 @@ class CellKraftE1500Drivers:
         :return: int %
         """
 
-        ReadResult = self.instr.read(self.registers["Get_Flow"]["register"])
-        if isinstance(ReadResult, Exception):
-            raise ReadResult
+        readresult = self.instr.read(self.registers["Get_Flow"]["register"])
+        if isinstance(readresult, Exception):
+            raise readresult
         else:
-            return ReadResult.registers[0]/self.registers["Get_Flow"]["scaling"]
+            return readresult.registers[0]/self.registers["Get_Flow"]["scaling"]
 
     def Get_Pressure(self):
         """Get the pressure
@@ -415,11 +418,11 @@ class CellKraftE1500Drivers:
         :return: int Bar
         """
 
-        ReadResult = self.instr.read(self.registers["Get_Pressure"]["register"])
-        if isinstance(ReadResult, Exception):
-            raise ReadResult
+        readresult = self.instr.read(self.registers["Get_Pressure"]["register"])
+        if isinstance(readresult, Exception):
+            raise readresult
         else:
-            return ReadResult.registers[0]/self.registers["Get_Pressure"]["scaling"]
+            return readresult.registers[0]/self.registers["Get_Pressure"]["scaling"]
 
     def Get_Tube_T(self):
         """Get the tube temperature
@@ -427,28 +430,8 @@ class CellKraftE1500Drivers:
         :return: int °C
         """
 
-        ReadResult = self.instr.read(self.registers["Get_Tube_T"]["register"])
-        if isinstance(ReadResult, Exception):
-            raise ReadResult
+        readresult = self.instr.read(self.registers["Get_Tube_T"]["register"])
+        if isinstance(readresult, Exception):
+            raise readresult
         else:
-            return ReadResult.registers[0]/self.registers["Get_Tube_T"]["scaling"]
-
-if __name__ == "__main__":
-    test = CellKraftE1500Drivers("cet-cc01-gen01.insa-lyon.fr")
-    test.RH(26.2)
-    print("start")
-    # print(test.registers["PumpSetMode"])
-
-    # test.Pump(1)
-    # test.PumpSetMode("manual")
-    # test.PumpSetMode("auto")
-    # test.SP_Flow(1.2)
-    # test.Pump(0)
-
-    # test.Get_Flow()
-    # test.Get_Pressure()
-
-    # test.stop()
-    # test.close()
-
-    # print("End")
+            return readresult.registers[0]/self.registers["Get_Tube_T"]["scaling"]

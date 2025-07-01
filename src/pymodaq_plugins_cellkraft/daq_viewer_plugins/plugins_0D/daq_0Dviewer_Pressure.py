@@ -1,10 +1,9 @@
-from random import randint  # Debug for grab_data
-
 from pymodaq.utils.data import DataFromPlugins, DataToExport
-from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters, main
+from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters
 from pymodaq.utils.parameter import Parameter
 from pymodaq_plugins_cellkraft.hardware.cellkraft.Eseries import CellKraftE1500Drivers
 
+from pymodaq_plugins_cellkraft import config
 from pymodaq.utils.logger import set_logger, get_module_name
 
 logger = set_logger(get_module_name(__file__))
@@ -17,14 +16,11 @@ class DAQ_0DViewer_Pressure(DAQ_Viewer_base):
         pymodaq-data Version 5.0.23
 
         Limites thérorique a ne pas dépasser :
-            - Flow : 2 g/min                                                                - modifiable - move
-           X- Pressure : 10 bar (pression trop importante peut endommager les composants)   - non modifiable - viewer0D
-            - Steam Temperature : 180 °C                                                    - modifiable - move
-            - Tube Temperature : 200 °C                                                     - modifiable - move
-            - RH (Relative Humidity) : 80%                                                  - modifiable ? - move ?
-
-        Ligne de code pour la longueur de l'history du plot :
-            - ../pymodaq_gui/plotting/data_viewers/viewer0D.py:163
+            - Flow : 2 g/min                                                                - modifiable     - move
+           X- Pressure                                                                      - non modifiable - viewer0D
+            - Steam Temperature : 180 °C                                                    - modifiable     - move
+            - Tube Temperature : 200 °C                                                     - modifiable     - move
+            - RH (Relative Humidity) : 80%                                                  - modifiable     - move
 
         """
 
@@ -93,7 +89,6 @@ class DAQ_0DViewer_Pressure(DAQ_Viewer_base):
             initialized = self.controller.instr.connected
             info = "Initialized in Slave"
 
-        initialized = True  # /Debug mode\
         return info, initialized
 
     def close(self):
@@ -108,12 +103,11 @@ class DAQ_0DViewer_Pressure(DAQ_Viewer_base):
         ----------
         Naverage: int
             Number of hardware averaging (if hardware averaging is possible, self.hardware_averaging should be set to
-            True in class preamble and you should code this implementation)
+            True in class preamble, and you should code this implementation)
         kwargs: dict
             others optionals arguments
         """
         data_tot = self.controller.Get_Pressure()
-        # data_tot = randint(1, 99)  # dev tests
         self.dte_signal.emit(
             DataToExport(name='Graph',
                          data=[DataFromPlugins(
@@ -128,7 +122,3 @@ class DAQ_0DViewer_Pressure(DAQ_Viewer_base):
     def stop(self):
         """Stop the current grab hardware wise if necessary"""
         return ''
-
-
-if __name__ == '__main__':
-    main(__file__)
