@@ -36,7 +36,7 @@ class DAQ_0DViewer_Pressure(DAQ_Viewer_base):
             'title': 'Host:',
             'name': 'host',
             'type': 'str',
-            'value': 'cet-cc01-gen01.insa-lyon.fr'
+            'value': config('CellkraftE1500', 'host')
         },
         {
             'title': 'Info:',
