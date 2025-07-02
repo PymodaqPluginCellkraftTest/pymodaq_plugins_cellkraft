@@ -51,7 +51,7 @@ class DAQ_Move_CellkraftE1500(DAQ_Move_base):
 
     params = [{'title': 'Device:', 'name': 'device', 'type': 'str', 'value': 'Cellkraft E1500 Series',
                'readonly': True},
-              {'title': 'Host:', 'name': 'host', 'type': 'str', 'value': config('CellkraftE1500', 'host')},
+              {'title': 'Host:', 'name': 'host', 'type': 'str', 'value': config('Cellkraft', 'DEVICE01', 'host')},
               {'title': 'Write Limit:', 'name': 'limit', 'type': 'str', 'value': 'Nothing'},
               {'title': 'Info:', 'name': 'info', 'type': 'str', 'value': 'Nothing', 'readonly': True},
               ] + comon_parameters_fun(is_multiaxes=is_multiaxes, axis_names=_axis_names, epsilon=_epsilon)
