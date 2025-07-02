@@ -48,11 +48,15 @@ Viewer0D
 
 * **daq_0Dviewer_Pressure.py**: Acquires pressure from CellkraftE1500 steam generator
 
-..
-    Installation instructions
-    =========================
+Configuration File
+++++++++
+| You can configure the plugin with the toml file that is in user/documents/.pymodaq.
+| You just have to fill the folder with this template that you modify :
 
-    * PyMoDAQ’s version.
-    * Operating system’s version.
-    * What manufacturer’s drivers should be installed to make this plugin run?
-..
+.. code:: toml
+
+    title = "Configuration file of the Cellkraft plugin"
+
+    [Cellkraft.DEVICE01]
+    name = "CellkraftE1500"
+    host = "address_for_the_tcp_modbus"
