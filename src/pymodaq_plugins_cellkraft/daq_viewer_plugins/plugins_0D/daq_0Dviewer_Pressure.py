@@ -36,7 +36,7 @@ class DAQ_0DViewer_Pressure(DAQ_Viewer_base):
             'title': 'Host:',
             'name': 'host',
             'type': 'str',
-            'value': config('CellkraftE1500', 'host')
+            'value': config('Cellkraft', 'DEVICE01', 'host')
         },
         {
             'title': 'Info:',
