@@ -24,13 +24,9 @@ Plugin dedicated to Cellkraft devices
 Authors
 =======
 
-* Loïc Guillmard  (loic.guillmard@cnrs.Fr)
-
-Contributors
-============
-
+* Loïc Guillmard  (loic.guillmard@cnrs.fr)
 * Sébastien Guerrero  (sebastien.guerrero@insa-lyon.fr)
-* Fabien Villedieu (fabien.viledieu.pro@gmail.com)
+* Fabien Villedieu (fabien.villedieu.pro@gmail.com)
 
 Instruments
 ===========
