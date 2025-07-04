@@ -18,9 +18,12 @@ dependencies = [
 
 authors = [
     {name = "Loic GUILMARD", email = "loic.guilmard@cnrs.fr"},
+    {name = "Sébastien GUERRERO", email = "sebastien.guerrero@insa-lyon.fr"},
+    {name = "Fabien VILLEDIEU", email = "fabien.villedieu.pro@gmail.com"},
 ]
 maintainers = [
     {name = "Loic GUILMARD", email = "loic.guilmard@cnrs.fr"},
+    {name = "Sébastien GUERRERO", email = "sebastien.guerrero@insa-lyon.fr"},
 ]
 
 # nottodo: leave everything below as is!

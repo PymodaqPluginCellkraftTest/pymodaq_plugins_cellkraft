@@ -46,7 +46,7 @@ class SyncModBusInstrument:
         try:
             self.modbus.connect()
             self.connected = True
-            return True
+            return self.connected
         except:
             return False
 
@@ -60,17 +60,3 @@ class SyncModBusInstrument:
         """
         if str(address) not in address.keys():
             self.registerdict[str(address)]= {'authorizedvalues' :values, 'rwstatus': readwrite}
-
-
-def main():
-    host = "cet-cc01-gen01.insa-lyon.fr"
-    genvap = SyncModBusInstrument(host)
-    if genvap.ini_hardware():
-        genvap.write(9107, 0)
-        genvap.write(9300, 10)
-        genvap.read(4148)
-        print("done")
-
-
-if __name__ == "__main__":
-    main()
