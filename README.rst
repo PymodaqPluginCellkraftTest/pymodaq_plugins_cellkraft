@@ -3,7 +3,7 @@ pymodaq_plugins_cellkraft
 
 .. the following must be adapted to your developed package, links to pypi, github  description...
 
-.. image:: https://img.shields.io/pypi/v/pymodaq_plugins_modbus.svg
+.. image:: https://img.shields.io/pypi/v/pymodaq_plugins_cellkraft.svg
    :target: https://pypi.org/project/pymodaq_plugins_cellkraft/
    :alt: Latest Version
 
@@ -11,11 +11,11 @@ pymodaq_plugins_cellkraft
    :target: https://pymodaq.readthedocs.io/en/stable/?badge=latest
    :alt: Documentation Status
 
-.. image:: https://github.com/PyMoDAQ/pymodaq_plugins_template/workflows/Upload%20Python%20Package/badge.svg
+.. image:: https://github.com/PyMoDAQ/pymodaq_plugins_cellkraft/workflows/Upload%20Python%20Package/badge.svg
    :target: https://github.com/PyMoDAQ/pymodaq_plugins_cellkraft
    :alt: Publication Status
 
-.. image:: https://github.com/PyMoDAQ/pymodaq_plugins_template/actions/workflows/Test.yml/badge.svg
+.. image:: https://github.com/PyMoDAQ/pymodaq_plugins_cellkraft/actions/workflows/Test.yml/badge.svg
     :target: https://github.com/PyMoDAQ/pymodaq_plugins_cellkraft/actions/workflows/Test.yml
 
 
@@ -24,7 +24,7 @@ Plugin dedicated to Cellkraft devices
 Authors
 =======
 
-* Loïc Guillmard  (myemail@xxx.org)
+* Loïc Guillmard  (loic.guillmard@cnrs.Fr)
 
 Contributors
 ============
