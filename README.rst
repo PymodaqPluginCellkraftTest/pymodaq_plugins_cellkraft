@@ -1,5 +1,5 @@
 pymodaq_plugins_cellkraft
-########################
+#########################
 
 .. the following must be adapted to your developed package, links to pypi, github  description...
 
@@ -45,7 +45,7 @@ Viewer0D
 * **daq_0Dviewer_Pressure.py**: Acquires pressure from CellkraftE1500 steam generator
 
 Configuration File
-++++++++
+++++++++++++++++++
 | You can configure the plugin with the toml file that is in user/documents/.pymodaq.
 | You just have to fill the folder with this template that you modify :
 
